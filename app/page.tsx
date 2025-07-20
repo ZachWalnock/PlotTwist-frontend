@@ -57,7 +57,9 @@ export default function Home() {
         streetNumber={streetNumber}
         streetName={streetName}
         streetSuffix={streetSuffix}
-        analysisData={{analysis: analysisData?.final_report || ''}}
+        analysisData={analysisData}
+        propertyData={propertyData}
+        recentDevelopments={recentDevelopments}
       />
       
       const asPdf = pdf(doc)
