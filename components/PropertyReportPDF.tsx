@@ -153,11 +153,12 @@ interface PropertyReportPDFProps {
   streetNumber: string
   streetName: string
   streetSuffix: string
-  analysisData?: { 
-    analysis: string
+  analysisData?: {
+    final_report?: string
+    recent_developments?: string
+    evidence?: string
     data_sources?: any
-    recent_developments?: any
-    final_report?: any
+    development_opportunities?: string
   } | null
   propertyData?: any
   recentDevelopments?: any
@@ -187,7 +188,7 @@ const PropertyReportPDF: React.FC<PropertyReportPDFProps> = ({
         
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>{}fullAddress</Text>
+          <Text style={styles.title}>{fullAddress}</Text>
         </View>
 
         <View style={styles.divider} />
@@ -421,7 +422,7 @@ const PropertyReportPDF: React.FC<PropertyReportPDFProps> = ({
                     content = analysisData.final_report;
                   }
                 } else {
-                  content = analysisData.analysis || 'No analysis available';
+                  content = analysisData.development_opportunities || analysisData.evidence || 'No analysis available';
                 }
                 
                 // Clean up all markdown and formatting for PDF
