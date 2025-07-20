@@ -9,6 +9,11 @@ export default function Home() {
   const [streetNumber, setStreetNumber] = useState('')
   const [streetName, setStreetName] = useState('')
   const [streetSuffix, setStreetSuffix] = useState('')
+  const [analysisData, setAnalysisData] = useState<{analysis: string} | null>(null)
+  const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false)
+  const [analysisError, setAnalysisError] = useState<string | null>(null)
+  const [loadingMessage, setLoadingMessage] = useState('Thinking')
+  const [dots, setDots] = useState('')
   const fullText = "let's get started."
 
   useEffect(() => {
@@ -21,6 +26,14 @@ export default function Home() {
     }
   }, [currentIndex, fullText])
 
+  useEffect(() => {
+    console.log('useEffect triggered, showReportView:', showReportView)
+    if (showReportView) {
+      console.log('Calling fetchAnalysisData...')
+      fetchAnalysisData()
+    }
+  }, [showReportView])
+
   const handleGenerateReport = () => {
     setShowReportView(true)
   }
@@ -29,7 +42,53 @@ export default function Home() {
     setShowReportView(false)
   }
 
-  // Report Generation View
+  const fetchAnalysisData = async () => {
+    console.log('fetchAnalysisData called')
+    setIsLoadingAnalysis(true)
+    setAnalysisError(null)
+    setLoadingMessage('Thinking')
+    setDots('')
+    
+    const dotAnimation = setInterval(() => {
+      setDots(prev => prev.length >= 3 ? '' : prev + '.')
+    }, 500)
+    
+    setTimeout(() => {
+      setLoadingMessage('Analyzing data')
+    }, 3000)
+    
+    try {
+      const fullAddress = `${streetNumber} ${streetName} ${streetSuffix}, Boston, MA`
+      console.log('Sending address:', fullAddress)
+      
+      const res = await fetch(`http://localhost:8000/create-report`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            property_info: fullAddress,
+        }),
+      })
+      
+      console.log('Response status:', res.status)
+      
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`)
+      }
+      
+      const data = await res.json()
+      console.log('Response data:', data)
+      setAnalysisData(data)
+    } catch (error) {
+      console.error('Error in fetchAnalysisData:', error)
+      setAnalysisError(`Error: ${error.message}`)
+    } finally {
+      clearInterval(dotAnimation)
+      setIsLoadingAnalysis(false)
+    }
+  }
+
   if (showReportView) {
     return (
       <main className="min-h-screen bg-plottwist-dark-bg text-plottwist-dark-text">
@@ -42,9 +101,9 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Header */}
-        <div className="relative z-10 max-w-7xl w-full mx-auto px-6 py-8">
-          <div className="flex justify-between items-center">
+        {/* header */}
+        <div className="relative z-10 max-w-7xl w-full mx-auto px-6 py-4">
+          <div className="flex justify-start items-center">
             <button
               onClick={handleBackToHome}
               className="flex items-center space-x-2 text-plottwist-dark-text hover:text-plottwist-tech-blue transition-colors duration-300"
@@ -54,11 +113,13 @@ export default function Home() {
               </svg>
               <span>Back to Home</span>
             </button>
-            <div></div>
           </div>
         </div>
+        
+        {/* Header separator line - full width */}
+        <div className="w-full h-0.5 bg-white/30"></div>
 
-        {/* Property Details Content */}
+        {/* property details content */}
         <div className="relative flex flex-col items-center px-6 pt-16">
           <div className="text-center mb-16 animate-slide-up">
             <h1 className="text-6xl md:text-7xl font-bold mb-6 text-plottwist-dark-text">
@@ -69,11 +130,35 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Property Details Grid */}
-          <div className="w-full max-w-6xl animate-fade-in" style={{animationDelay: '0.5s'}}>
+          {/* property details grid */}
+          <div className="w-full max-w-6xl relative">
+            {/* PDF Icon */}
+            <div className="absolute -top-16 right-0">
+              <button 
+                onClick={() => {
+                  // TODO: Implement PDF export functionality
+                  console.log('PDF export clicked')
+                }}
+                className="relative group"
+              >
+                <div className="w-12 h-12 bg-plottwist-tech-blue/10 backdrop-blur-sm rounded-xl border border-plottwist-tech-blue/20 flex items-center justify-center hover:bg-plottwist-tech-blue/20 transition-all duration-300 cursor-pointer">
+                  <svg className="w-6 h-6 text-plottwist-tech-blue group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                
+                {/* Tooltip */}
+                <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-plottwist-dark-surface/70 backdrop-blur-sm rounded-lg border border-plottwist-tech-blue/20 text-sm text-plottwist-dark-text/80 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                  Export Data as PDF
+                  {/* Tooltip arrow */}
+                  <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-plottwist-dark-surface/70"></div>
+                </div>
+              </button>
+            </div>
+            
             <div className="bg-plottwist-dark-surface/50 backdrop-blur-sm rounded-3xl p-8 border border-plottwist-tech-blue/20">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Section 1: Parcel Overview */}
+                {/* parcel overview */}
                 <div className="space-y-6">
                   <h2 className="text-2xl font-bold text-plottwist-tech-blue mb-6">Parcel Overview</h2>
                   
@@ -120,7 +205,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Section 2: Zoning Information */}
+                {/* zoning information */}
                 <div className="space-y-6">
                   <h2 className="text-2xl font-bold text-plottwist-pink mb-6">Zoning Information</h2>
                   
@@ -152,7 +237,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Section 3: Dimensional Requirements */}
+                {/* dimensional requirements */}
                 <div className="space-y-6">
                   <h2 className="text-2xl font-bold text-plottwist-tech-blue-light mb-6">Dimensional Requirements</h2>
                   
@@ -188,13 +273,52 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Predictive Analytics Section */}
-        <div className="w-full max-w-6xl mt-12 mx-auto">
+        {/* predictive */}
+        <div className="w-full max-w-6xl mt-12 mx-auto pb-16">
           <div className="bg-plottwist-dark-surface/50 backdrop-blur-sm rounded-3xl p-8 border border-plottwist-pink/20">
+            <div className="text-center mb-8">
+              <h3 className="text-2xl font-bold text-plottwist-dark-text">Predictive Analysis</h3>
+            </div>
+
+            {isLoadingAnalysis && (
+              <div className="text-center py-8">
+                <div className="text-2xl font-bold text-plottwist-pink mb-2">
+                  {loadingMessage}
+                  <span className="inline-block w-6 text-left animate-pulse">
+                    {dots}
+                  </span>
+                </div>
+                <p className="text-plottwist-dark-text/60">Please wait while we process your request</p>
+              </div>
+            )}
+
+            {analysisError && (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <p className="text-red-400 font-medium">Error loading analysis</p>
+                <p className="text-plottwist-dark-text/60 mt-2">{analysisError}</p>
+              </div>
+            )}
+
+            {analysisData && !isLoadingAnalysis && (
+              <div className="space-y-6">
+                <div className="bg-plottwist-dark-surface/30 rounded-lg p-8 text-plottwist-dark-text">
+                  <div className="prose prose-invert max-w-none">
+                    <h4 className="text-xl font-bold text-plottwist-pink mb-4">AI Analysis Report</h4>
+                    <div className="text-plottwist-dark-text/90 leading-relaxed whitespace-pre-wrap">
+                      {analysisData.analysis}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Floating particles */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           {[...Array(6)].map((_, i) => (
             <div
@@ -218,10 +342,10 @@ export default function Home() {
     )
   }
 
-  // Homepage View
+  // home view
   return (
     <main className="min-h-screen bg-plottwist-dark-bg text-plottwist-dark-text">
-      {/* Animated Background */}
+      {/* animated background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-mesh rounded-full blur-3xl animate-float"></div>
@@ -230,22 +354,22 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Header */}
+      {/* header */}
       <div className="relative z-10 max-w-7xl w-full mx-auto px-6 py-8">
         <div className="flex justify-between items-center">
           <div></div>
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* main content */}
       <div className="relative flex flex-col items-center px-6 pt-16">
-        {/* Main Title */}
+        {/* main title */}
         <div className="text-center mb-20 animate-slide-up">
           <div className="relative">
             <h1 className="text-8xl md:text-9xl font-bold mb-6 text-plottwist-dark-text">
               PlotTwist
             </h1>
-            {/* Cohesive blue fade behind title */}
+            {/*fade */}
             <div className="absolute inset-0 bg-gradient-to-r from-plottwist-tech-blue/20 via-plottwist-tech-blue-light/15 to-plottwist-tech-blue-accent/20 blur-3xl"></div>
           </div>
           <p className="text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed text-plottwist-dark-text/80">
@@ -253,7 +377,7 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Typewriter Text */}
+        {/* text animation */}
         <div className="text-center mb-32 animate-fade-in" style={{animationDelay: '0.5s'}}>
           <div className="inline-block">
             <span className="text-4xl md:text-5xl font-mono text-plottwist-tech-blue">
@@ -265,12 +389,12 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Search Bar */}
+        {/* search bar */}
         <div className="w-full max-w-5xl">
           <div className="flex flex-col items-center space-y-8">
             <div className="w-full">
               <div className="flex flex-col md:flex-row gap-4 w-full">
-                {/* Street Number */}
+                {/* street number */}
                 <div className="relative flex-1">
                   <input
                     type="text"
@@ -282,7 +406,7 @@ export default function Home() {
                   />
                 </div>
                 
-                {/* Street Name */}
+                {/* street name */}
                 <div className="relative flex-2">
                   <input
                     type="text"
@@ -294,7 +418,7 @@ export default function Home() {
                   />
                 </div>
                 
-                {/* Street Suffix */}
+                {/* street suffix */}
                 <div className="relative flex-1">
                   <input
                     type="text"
@@ -322,7 +446,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Description Text */}
+        {/* description text */}
         <div className="text-center mt-16">
           <p className="text-3xl md:text-4xl font-bold text-white max-w-4xl mx-auto leading-relaxed">
             Generate a report with <span className="text-plottwist-pink">advanced</span> <span className="text-plottwist-pink">analytics</span> and get <span className="text-plottwist-pink">predictive</span> <span className="text-plottwist-pink">data</span>.
@@ -330,7 +454,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Report Preview */}
+      {/* report preview */}
       <div className="relative mt-32 pb-32">
         <div className="max-w-7xl mx-auto px-6">
           <div className="bg-plottwist-dark-surface/50 backdrop-blur-sm rounded-3xl p-8 border border-plottwist-tech-blue/20">
@@ -344,7 +468,7 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* Section 1: Parcel Overview */}
+              {/* parcel overview */}
               <div className="space-y-6">
                 <h2 className="text-xl font-bold text-plottwist-tech-blue mb-4">Parcel Overview</h2>
                 
@@ -376,7 +500,7 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Section 2: Zoning Information */}
+              {/* zoning information */}
               <div className="space-y-6">
                 <h2 className="text-xl font-bold text-plottwist-pink mb-4">Zoning Information</h2>
                 
@@ -403,7 +527,7 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Section 3: Dimensional Requirements */}
+              {/* dimensional requirements */}
               <div className="space-y-6">
                 <h2 className="text-xl font-bold text-plottwist-tech-blue-light mb-4">Dimensional Requirements</h2>
                 
@@ -434,7 +558,58 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Floating particles */}
+      {/* Predictive Data Capabilities */}
+      <div className="relative mt-0.5 pb-32">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Find Recent Developments */}
+            <div className="bg-gradient-to-br from-plottwist-dark-surface/60 to-plottwist-dark-surface/40 backdrop-blur-xl rounded-2xl p-8 border border-plottwist-tech-blue/30 hover:border-plottwist-tech-blue/50 transition-all duration-300 group">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-plottwist-tech-blue to-plottwist-tech-blue-light rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-plottwist-tech-blue mb-4">Find Recent Developments</h3>
+                <p className="text-plottwist-dark-text/80 leading-relaxed">
+                  Discover nearby construction projects, zoning changes, and market trends that could impact your property's development potential.
+                </p>
+              </div>
+            </div>
+
+            {/* Assess Feasibility */}
+            <div className="bg-gradient-to-br from-plottwist-dark-surface/60 to-plottwist-dark-surface/40 backdrop-blur-xl rounded-2xl p-8 border border-plottwist-pink/30 hover:border-plottwist-pink/50 transition-all duration-300 group">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-plottwist-pink to-pink-400 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-plottwist-pink mb-4">Assess Feasibility</h3>
+                <p className="text-plottwist-dark-text/80 leading-relaxed">
+                  Evaluate development potential based on zoning regulations, market conditions, and financial viability analysis.
+                </p>
+              </div>
+            </div>
+
+            {/* Research Opportunities */}
+            <div className="bg-gradient-to-br from-plottwist-dark-surface/60 to-plottwist-dark-surface/40 backdrop-blur-xl rounded-2xl p-8 border border-plottwist-tech-blue-light/30 hover:border-plottwist-tech-blue-light/50 transition-all duration-300 group">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-plottwist-tech-blue-light to-cyan-400 rounded-xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-plottwist-tech-blue-light mb-4">Research Opportunities</h3>
+                <p className="text-plottwist-dark-text/80 leading-relaxed">
+                  Identify untapped development opportunities through comprehensive market analysis and predictive modeling.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         {[...Array(6)].map((_, i) => (
           <div
