@@ -95,7 +95,7 @@ export default function Home() {
     try {
       console.log('Sending address data:', { streetNumber, streetName, streetSuffix })
       
-      const res = await fetch(`http://localhost:8000/create-report`, {
+      const res = await fetch(`https://plottwist-sr3bk6q7dq-uc.a.run.app/create-report`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
