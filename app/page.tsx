@@ -11,7 +11,7 @@ export default function Home() {
   const [streetNumber, setStreetNumber] = useState('')
   const [streetName, setStreetName] = useState('')
   const [streetSuffix, setStreetSuffix] = useState('')
-  const [analysisData, setAnalysisData] = useState<{analysis: string, data_sources?: any, recent_developments?: any, final_report?: any} | null>(null)
+  const [analysisData, setAnalysisData] = useState<{final_report?: string, recent_developments?: string, evidence?: string, data_sources?: any, development_opportunities?: string} | null>(null)
   const [propertyData, setPropertyData] = useState<any>(null)
   const [recentDevelopments, setRecentDevelopments] = useState<any>(null)
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false)
@@ -469,7 +469,7 @@ export default function Home() {
               <div className="space-y-6">
                 <div className="bg-plottwist-dark-surface/30 rounded-lg p-6 text-plottwist-dark-text">
                   <div className="prose prose-invert max-w-none">
-                    <div className="text-plottwist-dark-text/90 leading-relaxed [&>h1]:text-3xl [&>h1]:font-bold [&>h1]:mb-4 [&>h1]:text-plottwist-pink [&>h2]:text-2xl [&>h2]:font-semibold [&>h2]:mb-3 [&>h2]:text-plottwist-pink/90 [&>h3]:text-xl [&>h3]:font-medium [&>h3]:mb-2 [&>h3]:text-plottwist-pink/80 [&>h4]:text-lg [&>h4]:font-medium [&>h4]:mb-2 [&>h4]:text-plottwist-pink/70 [&>p]:text-base [&>p]:mb-3 [&>ul]:mb-3 [&>ol]:mb-3 [&>li]:mb-1 [&>strong]:text-plottwist-pink/90 [&>em]:text-plottwist-pink/80">
+                    <div className="text-plottwist-dark-text/90 leading-relaxed markdown-content">
                       <ReactMarkdown>
                         {typeof recentDevelopments === 'string' ? recentDevelopments : JSON.stringify(recentDevelopments, null, 2)}
                       </ReactMarkdown>
@@ -521,23 +521,13 @@ export default function Home() {
 
             {analysisData && !isLoadingAnalysis && (
               <div className="space-y-6">
-                {analysisData.final_report ? (
+                {analysisData.development_opportunities ? (
                   <div className="bg-plottwist-dark-surface/30 rounded-lg p-8 text-plottwist-dark-text">
                     <div className="prose prose-invert max-w-none">
-                      <h4 className="text-xl font-bold text-plottwist-tech-blue mb-6">Final Analysis Report</h4>
-                      <div className="text-plottwist-dark-text/90 leading-relaxed [&>h1]:text-3xl [&>h1]:font-bold [&>h1]:mb-4 [&>h1]:text-plottwist-tech-blue [&>h2]:text-2xl [&>h2]:font-semibold [&>h2]:mb-3 [&>h2]:text-plottwist-tech-blue/90 [&>h3]:text-xl [&>h3]:font-medium [&>h3]:mb-2 [&>h3]:text-plottwist-tech-blue/80 [&>h4]:text-lg [&>h4]:font-medium [&>h4]:mb-2 [&>h4]:text-plottwist-tech-blue/70 [&>p]:text-base [&>p]:mb-3 [&>ul]:mb-3 [&>ol]:mb-3 [&>li]:mb-1 [&>strong]:text-plottwist-tech-blue/90 [&>em]:text-plottwist-tech-blue/80">
+                      <h4 className="text-xl font-bold text-plottwist-tech-blue mb-6">Development Opportunities</h4>
+                      <div className="text-plottwist-dark-text/90 leading-relaxed markdown-content blue-theme">
                         <ReactMarkdown>
-                          {(() => {
-                            if (typeof analysisData.final_report === 'string') {
-                              // Parse the XML-like structure to extract OPPORTUNITIES
-                              const opportunitiesMatch = analysisData.final_report.match(/<OPPORTUNITIES>([\s\S]*?)<\/OPPORTUNITIES>/);
-                              if (opportunitiesMatch) {
-                                return opportunitiesMatch[1].trim();
-                              }
-                              return analysisData.final_report;
-                            }
-                            return JSON.stringify(analysisData.final_report, null, 2);
-                          })()}
+                          {analysisData.development_opportunities}
                         </ReactMarkdown>
                       </div>
                     </div>
@@ -545,9 +535,9 @@ export default function Home() {
                 ) : (
                   <div className="bg-plottwist-dark-surface/30 rounded-lg p-8 text-plottwist-dark-text">
                     <div className="prose prose-invert max-w-none">
-                      <h4 className="text-xl font-bold text-plottwist-tech-blue mb-4">AI Analysis Report</h4>
+                      <h4 className="text-xl font-bold text-plottwist-tech-blue mb-4">Development Opportunities</h4>
                       <div className="text-plottwist-dark-text/90 leading-relaxed whitespace-pre-wrap">
-                        {analysisData.analysis}
+                        No development opportunities data available
                       </div>
                     </div>
                   </div>
