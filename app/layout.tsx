@@ -5,16 +5,35 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'PlotTwist',
-  description: 'PlotTwist is a platform that uses AI to analyze property data and provide insights on potential development opportunities.',
-  keywords: ['Boston', 'Property', 'Development', 'Opportunities', 'AI', 'Analysis'],
-  authors: [{ name: 'Zig'}],
+  title: 'PlotTwist - AI-Powered Boston Property Insights',
+  description: 'Generate comprehensive property reports with AI analysis, zoning information, and development opportunities for Boston real estate.',
+  keywords: ['boston real estate', 'property analysis', 'zoning', 'AI insights', 'development opportunities'],
+  authors: [{ name: 'PlotTwist Team' }],
   creator: 'PlotTwist',
-  publisher: 'PlotTwist',
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
+  metadataBase: new URL('https://plottwist-frontend.vercel.app'),
+  
+  openGraph: {
+    title: 'PlotTwist - AI-Powered Boston Property Insights',
+    description: 'Generate comprehensive property reports with AI analysis, zoning information, and development opportunities.',
+    url: 'https://plottwist-frontend.vercel.app',
+    siteName: 'PlotTwist',
+    images: [
+      {
+        url: '/loader.png',
+        height: 630,
+        alt: 'PlotTwist - Boston Property Intelligence Platform',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  
+  twitter: {
+    card: 'summary_large_image',
+    title: 'PlotTwist - AI-Powered Boston Property Insights',
+    description: 'Generate comprehensive property reports with AI analysis and development opportunities.',
+    images: ['/og-image.png'],
+    creator: '@plottwist', // Your Twitter handle
   },
 }
 
