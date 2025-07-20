@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'PlotTwist - AI-Powered Boston Property Insights',
     description: 'Generate comprehensive property reports with AI analysis and development opportunities.',
-    images: ['/og-image.png'],
+    images: ['/loader.png'],
     creator: '@plottwist', // Your Twitter handle
   },
 }
