@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { pdf } from '@react-pdf/renderer'
 
 export default function Home() {
   const [displayText, setDisplayText] = useState('')
@@ -40,6 +41,35 @@ export default function Home() {
 
   const handleBackToHome = () => {
     setShowReportView(false)
+  }
+
+  const handleExportPDF = async () => {
+    try {
+      // Dynamically import the PDF component
+      const { default: PropertyReportPDF } = await import('../components/PropertyReportPDF')
+      
+      const doc = <PropertyReportPDF 
+        streetNumber={streetNumber}
+        streetName={streetName}
+        streetSuffix={streetSuffix}
+        analysisData={analysisData}
+      />
+      
+      const asPdf = pdf(doc)
+      const blob = await asPdf.toBlob()
+      
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${streetNumber}-${streetName}-${streetSuffix}-Property-Report.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+      alert('Error generating PDF. Please try again.')
+    }
   }
 
   const fetchAnalysisData = async () => {
@@ -82,7 +112,8 @@ export default function Home() {
       setAnalysisData(data)
     } catch (error) {
       console.error('Error in fetchAnalysisData:', error)
-      setAnalysisError(`Error: ${error.message}`)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      setAnalysisError(`Error: ${errorMessage}`)
     } finally {
       clearInterval(dotAnimation)
       setIsLoadingAnalysis(false)
@@ -135,10 +166,7 @@ export default function Home() {
             {/* PDF Icon */}
             <div className="absolute -top-16 right-0">
               <button 
-                onClick={() => {
-                  // TODO: Implement PDF export functionality
-                  console.log('PDF export clicked')
-                }}
+                onClick={handleExportPDF}
                 className="relative group"
               >
                 <div className="w-12 h-12 bg-plottwist-tech-blue/10 backdrop-blur-sm rounded-xl border border-plottwist-tech-blue/20 flex items-center justify-center hover:bg-plottwist-tech-blue/20 transition-all duration-300 cursor-pointer">
