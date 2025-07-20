@@ -66,4 +66,90 @@ body {
   animation: drawBuilding 15s ease-in-out infinite;
   stroke-dasharray: 1000;
   stroke-dashoffset: 1000;
+}
+
+/* Markdown content styling */
+.markdown-content h1 {
+  font-size: 1.875rem; /* 30px */
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #ff6b9d; /* plottwist-pink */
+}
+
+.markdown-content h2 {
+  font-size: 1.5rem; /* 24px */
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: rgba(255, 107, 157, 0.9); /* plottwist-pink/90 */
+}
+
+.markdown-content h3 {
+  font-size: 1.25rem; /* 20px */
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: rgba(255, 107, 157, 0.8); /* plottwist-pink/80 */
+}
+
+.markdown-content h4 {
+  font-size: 1.125rem; /* 18px */
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: rgba(255, 107, 157, 0.7); /* plottwist-pink/70 */
+}
+
+.markdown-content p {
+  font-size: 1rem; /* 16px */
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin-bottom: 0.75rem;
+  padding-left: 1.5rem;
+}
+
+.markdown-content li {
+  margin-bottom: 0.25rem;
+  line-height: 1.6;
+}
+
+.markdown-content strong {
+  font-weight: 600;
+  color: rgba(255, 107, 157, 0.9); /* plottwist-pink/90 */
+}
+
+.markdown-content em {
+  font-style: italic;
+  color: rgba(255, 107, 157, 0.8); /* plottwist-pink/80 */
+}
+
+/* Blue theme for predictive analysis */
+.markdown-content.blue-theme h1,
+.markdown-content.blue-theme h2,
+.markdown-content.blue-theme h3,
+.markdown-content.blue-theme h4,
+.markdown-content.blue-theme strong,
+.markdown-content.blue-theme em {
+  color: #00d4ff; /* plottwist-tech-blue */
+}
+
+.markdown-content.blue-theme h2 {
+  color: rgba(0, 212, 255, 0.9); /* plottwist-tech-blue/90 */
+}
+
+.markdown-content.blue-theme h3 {
+  color: rgba(0, 212, 255, 0.8); /* plottwist-tech-blue/80 */
+}
+
+.markdown-content.blue-theme h4 {
+  color: rgba(0, 212, 255, 0.7); /* plottwist-tech-blue/70 */
+}
+
+.markdown-content.blue-theme strong {
+  color: rgba(0, 212, 255, 0.9); /* plottwist-tech-blue/90 */
+}
+
+.markdown-content.blue-theme em {
+  color: rgba(0, 212, 255, 0.8); /* plottwist-tech-blue/80 */
 } 
