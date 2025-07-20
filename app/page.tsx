@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { pdf } from '@react-pdf/renderer'
+import ReactMarkdown from 'react-markdown'
 
 export default function Home() {
   const [displayText, setDisplayText] = useState('')
@@ -10,7 +11,9 @@ export default function Home() {
   const [streetNumber, setStreetNumber] = useState('')
   const [streetName, setStreetName] = useState('')
   const [streetSuffix, setStreetSuffix] = useState('')
-  const [analysisData, setAnalysisData] = useState<{analysis: string} | null>(null)
+  const [analysisData, setAnalysisData] = useState<{analysis: string, data_sources?: any, recent_developments?: any, final_report?: any} | null>(null)
+  const [propertyData, setPropertyData] = useState<any>(null)
+  const [recentDevelopments, setRecentDevelopments] = useState<any>(null)
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false)
   const [analysisError, setAnalysisError] = useState<string | null>(null)
   const [loadingMessage, setLoadingMessage] = useState('Thinking')
@@ -41,6 +44,8 @@ export default function Home() {
 
   const handleBackToHome = () => {
     setShowReportView(false)
+    setPropertyData(null)
+    setRecentDevelopments(null)
   }
 
   const handleExportPDF = async () => {
@@ -88,8 +93,7 @@ export default function Home() {
     }, 3000)
     
     try {
-      const fullAddress = `${streetNumber} ${streetName} ${streetSuffix}, Boston, MA`
-      console.log('Sending address:', fullAddress)
+      console.log('Sending address data:', { streetNumber, streetName, streetSuffix })
       
       const res = await fetch(`http://localhost:8000/create-report`, {
         method: "POST",
@@ -97,7 +101,10 @@ export default function Home() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            property_info: fullAddress,
+            street_number: streetNumber,
+            street_name: streetName,
+            street_suffix: streetSuffix,
+            unit_number: "",
         }),
       })
       
@@ -110,6 +117,18 @@ export default function Home() {
       const data = await res.json()
       console.log('Response data:', data)
       setAnalysisData(data)
+      
+      // Parse data_sources if available
+      if (data.data_sources) {
+        console.log('Data sources:', data.data_sources)
+        setPropertyData(data.data_sources)
+      }
+      
+      // Parse recent_developments if available
+      if (data.recent_developments) {
+        console.log('Recent developments:', data.recent_developments)
+        setRecentDevelopments(data.recent_developments)
+      }
     } catch (error) {
       console.error('Error in fetchAnalysisData:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
@@ -185,138 +204,304 @@ export default function Home() {
             </div>
             
             <div className="bg-plottwist-dark-surface/50 backdrop-blur-sm rounded-3xl p-8 border border-plottwist-tech-blue/20">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* parcel overview */}
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-plottwist-tech-blue mb-6">Parcel Overview</h2>
-                  
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue/20">
-                      <span className="text-plottwist-dark-text/80 font-medium">Parcel ID:</span>
-                      <span className="text-plottwist-dark-text font-semibold">x</span>
-                    </div>
+              {isLoadingAnalysis ? (
+                <div className="flex items-center justify-center py-16">
+                  <div className="text-center">
+                    <div className="w-16 h-16 border-4 border-plottwist-tech-blue/30 border-t-plottwist-tech-blue rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-plottwist-dark-text/60">Loading property data...</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {/* Property Details */}
+                  <div className="space-y-6">
+                    <h2 className="text-2xl font-bold text-plottwist-tech-blue mb-6">Property Details</h2>
                     
-                    <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue/20">
-                      <span className="text-plottwist-dark-text/80 font-medium">Address:</span>
-                      <span className="text-plottwist-dark-text font-semibold">x</span>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Parcel ID:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.parcel_id || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Address:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.address || `${streetNumber} ${streetName} ${streetSuffix}, Boston, MA`}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Unit Number:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.unit_number || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Property Type:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.property_type || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Classification Code:</span>
+                        <span className="text-plottwist-dark-text font-semibold text-right">
+                          {propertyData?.classification_code || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Lot Size:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.lot_size || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Living Area:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.living_area || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Year Built:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.year_built || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Stories:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.stories || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Owner:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.owner || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Owner Address:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.owner_address || 'N/A'}
+                        </span>
+                      </div>
                     </div>
+                  </div>
+
+                  {/* Building Features */}
+                  <div className="space-y-6">
+                    <h2 className="text-2xl font-bold text-plottwist-pink mb-6">Building Features</h2>
                     
-                    <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue/20">
-                      <span className="text-plottwist-dark-text/80 font-medium">Lot Size:</span>
-                      <span className="text-plottwist-dark-text font-semibold">x</span>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-pink/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Bedrooms:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.bedrooms || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-pink/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Bathrooms:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.bathrooms || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-pink/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Total Rooms:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.total_rooms || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-pink/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Kitchens:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.number_of_kitchens || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-pink/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Parking Spaces:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.parking_spaces || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-pink/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Building Style:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.building_style || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-pink/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Exterior Finish:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.exterior_finish || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-pink/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Foundation:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.foundation || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-pink/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Heat Type:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.heat_type || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-pink/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">AC Type:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.ac_type || 'N/A'}
+                        </span>
+                      </div>
                     </div>
+                  </div>
+
+                  {/* Zoning & Valuation */}
+                  <div className="space-y-6">
+                    <h2 className="text-2xl font-bold text-plottwist-tech-blue-light mb-6">Zoning & Valuation</h2>
                     
-                    <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue/20">
-                      <span className="text-plottwist-dark-text/80 font-medium">Existing Structure:</span>
-                      <span className="text-plottwist-dark-text font-semibold">x</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue/20">
-                      <span className="text-plottwist-dark-text/80 font-medium">Year Built:</span>
-                      <span className="text-plottwist-dark-text font-semibold">x</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue/20">
-                      <span className="text-plottwist-dark-text/80 font-medium">Parking:</span>
-                      <span className="text-plottwist-dark-text font-semibold">x</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue/20">
-                      <span className="text-plottwist-dark-text/80 font-medium">Owner:</span>
-                      <span className="text-plottwist-dark-text font-semibold">x</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue/20">
-                      <span className="text-plottwist-dark-text/80 font-medium">Owner Mailing Address:</span>
-                      <span className="text-plottwist-dark-text font-semibold">x</span>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue-light/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Zoning:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.zoning || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue-light/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Land Use:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.land_use || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue-light/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Building Use:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.building_use || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue-light/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Exterior Condition:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.exterior_condition || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue-light/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Interior Condition:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.interior_condition || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue-light/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">FY2025 Building Value:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.fy2025_building_value || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue-light/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">FY2025 Land Value:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.fy2025_land_value || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue-light/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">FY2025 Total Value:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.fy2025_total_value || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue-light/20">
+                        <span className="text-plottwist-dark-text/80 font-medium">Previous Year Value:</span>
+                        <span className="text-plottwist-dark-text font-semibold">
+                          {propertyData?.previous_year_value || 'N/A'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
+              )}
+            </div>
+          </div>
+        </div>
 
-                {/* zoning information */}
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-plottwist-pink mb-6">Zoning Information</h2>
-                  
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center py-3 border-b border-plottwist-pink/20">
-                      <span className="text-plottwist-dark-text/80 font-medium">Zoning District:</span>
-                      <span className="text-plottwist-dark-text font-semibold">x</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center py-3 border-b border-plottwist-pink/20">
-                      <span className="text-plottwist-dark-text/80 font-medium">Zoning Code Source:</span>
-                      <span className="text-plottwist-dark-text font-semibold">x</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center py-3 border-b border-plottwist-pink/20">
-                      <span className="text-plottwist-dark-text/80 font-medium">Zoning Map:</span>
-                      <span className="text-plottwist-dark-text font-semibold">x</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center py-3 border-b border-plottwist-pink/20">
-                      <span className="text-plottwist-dark-text/80 font-medium">Allowed Use (By-Right):</span>
-                      <span className="text-plottwist-dark-text font-semibold">x</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center py-3 border-b border-plottwist-pink/20">
-                      <span className="text-plottwist-dark-text/80 font-medium">Overlay:</span>
-                      <span className="text-plottwist-dark-text font-semibold">x</span>
-                    </div>
-                  </div>
+        {/* Recent Developments */}
+        <div className="w-full max-w-6xl mt-8 mx-auto -mb-2">
+          <div className="bg-plottwist-dark-surface/50 backdrop-blur-sm rounded-3xl p-8 border border-plottwist-pink/20">
+            <div className="text-center mb-8">
+              <h3 className="text-2xl font-bold text-plottwist-dark-text">Recent Developments</h3>
+            </div>
+
+            {isLoadingAnalysis ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-center">
+                  <div className="w-12 h-12 border-4 border-plottwist-pink/30 border-t-plottwist-pink rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-plottwist-dark-text/60">Loading recent developments...</p>
                 </div>
-
-                {/* dimensional requirements */}
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-plottwist-tech-blue-light mb-6">Dimensional Requirements</h2>
-                  
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue-light/20">
-                      <span className="text-plottwist-dark-text/80 font-medium">Max Height:</span>
-                      <span className="text-plottwist-dark-text font-semibold">x</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue-light/20">
-                      <span className="text-plottwist-dark-text/80 font-medium">Min Lot Area:</span>
-                      <span className="text-plottwist-dark-text font-semibold">x</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue-light/20">
-                      <span className="text-plottwist-dark-text/80 font-medium">Min Lot Width:</span>
-                      <span className="text-plottwist-dark-text font-semibold">x</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue-light/20">
-                      <span className="text-plottwist-dark-text/80 font-medium">Front Setback:</span>
-                      <span className="text-plottwist-dark-text font-semibold">x</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center py-3 border-b border-plottwist-tech-blue-light/20">
-                      <span className="text-plottwist-dark-text/80 font-medium">FAR:</span>
-                      <span className="text-plottwist-dark-text font-semibold">x</span>
+              </div>
+            ) : recentDevelopments ? (
+              <div className="space-y-6">
+                <div className="bg-plottwist-dark-surface/30 rounded-lg p-6 text-plottwist-dark-text">
+                  <div className="prose prose-invert max-w-none">
+                    <div className="text-plottwist-dark-text/90 leading-relaxed [&>h1]:text-3xl [&>h1]:font-bold [&>h1]:mb-4 [&>h1]:text-plottwist-pink [&>h2]:text-2xl [&>h2]:font-semibold [&>h2]:mb-3 [&>h2]:text-plottwist-pink/90 [&>h3]:text-xl [&>h3]:font-medium [&>h3]:mb-2 [&>h3]:text-plottwist-pink/80 [&>h4]:text-lg [&>h4]:font-medium [&>h4]:mb-2 [&>h4]:text-plottwist-pink/70 [&>p]:text-base [&>p]:mb-3 [&>ul]:mb-3 [&>ol]:mb-3 [&>li]:mb-1 [&>strong]:text-plottwist-pink/90 [&>em]:text-plottwist-pink/80">
+                      <ReactMarkdown>
+                        {typeof recentDevelopments === 'string' ? recentDevelopments : JSON.stringify(recentDevelopments, null, 2)}
+                      </ReactMarkdown>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-plottwist-pink/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-plottwist-pink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <p className="text-plottwist-pink font-medium">No recent developments found</p>
+                <p className="text-plottwist-dark-text/60 mt-2">No recent development data available for this property</p>
+              </div>
+            )}
           </div>
         </div>
 
         {/* predictive */}
         <div className="w-full max-w-6xl mt-12 mx-auto pb-16">
-          <div className="bg-plottwist-dark-surface/50 backdrop-blur-sm rounded-3xl p-8 border border-plottwist-pink/20">
+          <div className="bg-plottwist-dark-surface/50 backdrop-blur-sm rounded-3xl p-8 border border-plottwist-tech-blue/20">
             <div className="text-center mb-8">
               <h3 className="text-2xl font-bold text-plottwist-dark-text">Predictive Analysis</h3>
             </div>
 
             {isLoadingAnalysis && (
-              <div className="text-center py-8">
-                <div className="text-2xl font-bold text-plottwist-pink mb-2">
-                  {loadingMessage}
-                  <span className="inline-block w-6 text-left animate-pulse">
-                    {dots}
-                  </span>
+              <div className="flex items-center justify-center py-8">
+                <div className="text-center">
+                  <div className="w-12 h-12 border-4 border-plottwist-tech-blue/30 border-t-plottwist-tech-blue rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-plottwist-dark-text/60">Loading predictive analysis...</p>
                 </div>
-                <p className="text-plottwist-dark-text/60">Please wait while we process your request</p>
               </div>
             )}
 
@@ -334,14 +519,37 @@ export default function Home() {
 
             {analysisData && !isLoadingAnalysis && (
               <div className="space-y-6">
-                <div className="bg-plottwist-dark-surface/30 rounded-lg p-8 text-plottwist-dark-text">
-                  <div className="prose prose-invert max-w-none">
-                    <h4 className="text-xl font-bold text-plottwist-pink mb-4">AI Analysis Report</h4>
-                    <div className="text-plottwist-dark-text/90 leading-relaxed whitespace-pre-wrap">
-                      {analysisData.analysis}
+                {analysisData.final_report ? (
+                  <div className="bg-plottwist-dark-surface/30 rounded-lg p-8 text-plottwist-dark-text">
+                    <div className="prose prose-invert max-w-none">
+                      <h4 className="text-xl font-bold text-plottwist-tech-blue mb-6">Final Analysis Report</h4>
+                      <div className="text-plottwist-dark-text/90 leading-relaxed [&>h1]:text-3xl [&>h1]:font-bold [&>h1]:mb-4 [&>h1]:text-plottwist-tech-blue [&>h2]:text-2xl [&>h2]:font-semibold [&>h2]:mb-3 [&>h2]:text-plottwist-tech-blue/90 [&>h3]:text-xl [&>h3]:font-medium [&>h3]:mb-2 [&>h3]:text-plottwist-tech-blue/80 [&>h4]:text-lg [&>h4]:font-medium [&>h4]:mb-2 [&>h4]:text-plottwist-tech-blue/70 [&>p]:text-base [&>p]:mb-3 [&>ul]:mb-3 [&>ol]:mb-3 [&>li]:mb-1 [&>strong]:text-plottwist-tech-blue/90 [&>em]:text-plottwist-tech-blue/80">
+                        <ReactMarkdown>
+                          {(() => {
+                            if (typeof analysisData.final_report === 'string') {
+                              // Parse the XML-like structure to extract OPPORTUNITIES
+                              const opportunitiesMatch = analysisData.final_report.match(/<OPPORTUNITIES>([\s\S]*?)<\/OPPORTUNITIES>/);
+                              if (opportunitiesMatch) {
+                                return opportunitiesMatch[1].trim();
+                              }
+                              return analysisData.final_report;
+                            }
+                            return JSON.stringify(analysisData.final_report, null, 2);
+                          })()}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="bg-plottwist-dark-surface/30 rounded-lg p-8 text-plottwist-dark-text">
+                    <div className="prose prose-invert max-w-none">
+                      <h4 className="text-xl font-bold text-plottwist-tech-blue mb-4">AI Analysis Report</h4>
+                      <div className="text-plottwist-dark-text/90 leading-relaxed whitespace-pre-wrap">
+                        {analysisData.analysis}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
